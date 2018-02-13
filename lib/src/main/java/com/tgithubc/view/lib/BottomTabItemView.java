@@ -290,9 +290,8 @@ public class BottomTabItemView extends View {
         return rect;
     }
 
-
     /**
-     *文字大小
+     * 文字大小
      *
      * @param size
      * @return
@@ -349,7 +348,6 @@ public class BottomTabItemView extends View {
         invalidate();
         return this;
     }
-
 
     /**
      * 设置是否选中的标记
