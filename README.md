@@ -1,4 +1,4 @@
-![image](https://github.com/tgithubc/BottomTabLayout/tree/master/splash/1.jpg)
+![image](https://github.com/tgithubc/BottomTabLayout/blob/master/splash/1.jpg)
 
 BottomTabLayout is a Simple,elegant bottom tab indicator layout.
 
