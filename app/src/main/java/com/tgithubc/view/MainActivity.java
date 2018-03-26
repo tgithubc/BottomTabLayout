@@ -3,6 +3,7 @@ package com.tgithubc.view;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import com.tgithubc.view.lib.BottomTabItemView;
 import com.tgithubc.view.lib.BottomTabLayout;
@@ -45,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onCenterViewClicked() {
+                    public void onCenterViewClicked(View centerView) {
                         Log.d(TAG, "onCenterViewClicked");
                     }
                 });

@@ -3,6 +3,7 @@ package com.tgithubc.view.lib;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
+import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -41,6 +42,8 @@ public class BottomTabLayout extends ViewGroup {
     private int mCenterViewWidth;
     // 中间的控件资源id
     private int mCenterViewRes;
+    // 中间控件的左右padding
+    private int mCenterViewPaddingLR;
     // 是否显示中间的控件
     private boolean isShowCenterView;
 
@@ -54,6 +57,8 @@ public class BottomTabLayout extends ViewGroup {
     private OnTabSelectedListener mListener;
     // 记录当前选中的tab index
     private int mCurrentIndex;
+    // 如果需要的话绑定ViewPager
+    private ViewPager mViewPager;
 
     public BottomTabLayout(Context context) {
         this(context, null);
@@ -99,6 +104,8 @@ public class BottomTabLayout extends ViewGroup {
             mCenterViewRes = ta.getResourceId(R.styleable.BottomTabStyle_bottom_tab_center_view, 0);
             mCenterViewWidth = ta.getDimensionPixelOffset(R.styleable.BottomTabStyle_bottom_tab_center_view_width,
                     defaultCenterViewWidth);
+            mCenterViewPaddingLR = ta.getDimensionPixelOffset(R.styleable.BottomTabStyle_bottom_tab_center_view_padding_lr,
+                    0);
             mRedDotSize = ta.getDimensionPixelOffset(R.styleable.BottomTabStyle_bottom_tab_item_red_dot_size,
                     defaultRedDotSize);
             mMessageTextColor = ta.getColor(R.styleable.BottomTabStyle_bottom_tab_item_message_tip_text_color,
@@ -121,30 +128,22 @@ public class BottomTabLayout extends ViewGroup {
         int paddingTop = getPaddingTop();
         int paddingRight = getPaddingRight();
         int paddingBottom = getPaddingBottom();
+
+        // tab可用宽高
         int availableWidth = width - paddingLeft - paddingRight;
         int availableHeight = height - paddingTop - paddingBottom;
         int count = getChildCount();
-        int widthSpec;
+
         int centerViewIndex = (count - 1) / 2;
         if (isShowCenterView) {
-            // 测量中间view，总体tab的可用宽要减去该中间view的宽
+            // 测量中间view，总体tab的可用宽要减去该中间view的宽，有中间控件的padding还得去掉padding
             View view = getChildAt(centerViewIndex);
             LayoutParams params = view.getLayoutParams();
-            switch (params.width) {
-                case LayoutParams.WRAP_CONTENT:
-                    widthSpec = MeasureSpec.makeMeasureSpec(mCenterViewWidth, MeasureSpec.AT_MOST);
-                    break;
-                case LayoutParams.MATCH_PARENT:
-                    widthSpec = MeasureSpec.makeMeasureSpec(mCenterViewWidth, MeasureSpec.EXACTLY);
-                    break;
-                default:
-                    widthSpec = MeasureSpec.makeMeasureSpec(Math.min(params.width, mCenterViewWidth),
-                            MeasureSpec.EXACTLY);
-                    break;
-            }
-            view.measure(widthSpec, MeasureSpec.makeMeasureSpec(availableHeight, MeasureSpec.EXACTLY));
-            availableWidth -= view.getMeasuredWidth();
+            view.measure(getCenterViewMeasureSpec(mCenterViewWidth, params.width),
+                    getCenterViewMeasureSpec(availableHeight, params.height));
+            availableWidth = availableWidth - view.getMeasuredWidth() - mCenterViewPaddingLR * 2;
         }
+        int widthSpec;
         for (int i = 0; i < count; i++) {
             View view = getChildAt(i);
             // 中间view已经再上面处理完了，只测量tab，宽度就是剩下的可用空间以count等分
@@ -159,19 +158,32 @@ public class BottomTabLayout extends ViewGroup {
         setMeasuredDimension(width, height);
     }
 
-    @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         final int parentLeft = getPaddingLeft();
         final int parentTop = getPaddingTop();
         final int parentBottom = b - t - getPaddingBottom();
+        // 锚点
         int point = parentLeft;
         int count = getChildCount();
+        int top, bottom;
+        // 模仿线性布局位移按宽布局就行
         for (int i = 0; i < count; i++) {
             View view = getChildAt(i);
             int width = view.getMeasuredWidth();
-            // 模仿线性布局位移按宽布局就行
-            view.layout(point, parentTop, point + width, parentBottom);
-            point += width;
+            if (isShowCenterView && i == ((count - 1) / 2)) {
+                top = (parentBottom - parentTop - view.getMeasuredHeight()) / 2 + parentTop;
+                bottom = view.getMeasuredHeight() + top;
+            } else {
+                top = parentTop;
+                bottom = parentBottom;
+            }
+            view.layout(point, top, point + width, bottom);
+            if (isShowCenterView && mCenterViewPaddingLR > 0
+                    && (i == ((count - 1) / 2) - 1 || i == ((count - 1) / 2))) {
+                point = point + width + mCenterViewPaddingLR;
+            } else {
+                point += width;
+            }
         }
     }
 
@@ -192,6 +204,46 @@ public class BottomTabLayout extends ViewGroup {
         }
         return result;
     }
+
+    /**
+     * 生成限定中间view的测量规格
+     *
+     * @param available
+     * @param paramsWH
+     * @return
+     */
+    private int getCenterViewMeasureSpec(int available, int paramsWH) {
+        int widthSpec;
+        switch (paramsWH) {
+            case LayoutParams.WRAP_CONTENT:
+                widthSpec = MeasureSpec.makeMeasureSpec(available, MeasureSpec.AT_MOST);
+                break;
+            case LayoutParams.MATCH_PARENT:
+                widthSpec = MeasureSpec.makeMeasureSpec(available, MeasureSpec.EXACTLY);
+                break;
+            default:
+                widthSpec = MeasureSpec.makeMeasureSpec(Math.min(paramsWH, available),
+                        MeasureSpec.EXACTLY);
+                break;
+        }
+        return widthSpec;
+    }
+
+    public void bindViewPage(ViewPager viewPager) {
+        if (viewPager == null || mViewPager == viewPager) {
+            return;
+        }
+        this.mViewPager = viewPager;
+        mViewPager.clearOnPageChangeListeners();
+        mViewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+
+            @Override
+            public void onPageSelected(int position) {
+                setSelected(position);
+            }
+        });
+    }
+
 
     public void addOnTabSelectedListener(OnTabSelectedListener onTabSelectedListener) {
         this.mListener = onTabSelectedListener;
@@ -334,17 +386,18 @@ public class BottomTabLayout extends ViewGroup {
                         .setOnClickListener(new OnClickListener() {
                             @Override
                             public void onClick(View view) {
-                                if (mCurrentIndex == finalI) {
-                                    if (mListener != null) {
-                                        mListener.onTabReselected(finalI);
+                                // 临时记住上一次点击的
+                                int preIndex = mCurrentIndex;
+                                // 再把新位置赋给current
+                                mCurrentIndex = finalI;
+                                // 反选上次的，选中当前的
+                                mTabs.get(mCurrentIndex).selected(true);
+                                mTabs.get(preIndex).selected(false);
+                                if (mListener != null) {
+                                    mListener.onTabSelected(mCurrentIndex, preIndex);
+                                    if (mViewPager != null) {
+                                        mViewPager.setCurrentItem(mCurrentIndex, false);
                                     }
-                                } else {
-                                    mTabs.get(finalI).selected(true);
-                                    mTabs.get(mCurrentIndex).selected(false);
-                                    if (mListener != null) {
-                                        mListener.onTabSelected(finalI, mCurrentIndex);
-                                    }
-                                    mCurrentIndex = finalI;
                                 }
                                 // 点击隐藏当前tab的红点
                                 hideRedDot(mCurrentIndex);
@@ -361,7 +414,7 @@ public class BottomTabLayout extends ViewGroup {
                     @Override
                     public void onClick(View view) {
                         if (mListener != null) {
-                            mListener.onCenterViewClicked();
+                            mListener.onCenterViewClicked(mCenterView);
                         }
                     }
                 });

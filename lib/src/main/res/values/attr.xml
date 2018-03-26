@@ -26,6 +26,8 @@
         <attr name="bottom_tab_center_view" format="reference"/>
         <!--中间扩展布局留宽-->
         <attr name="bottom_tab_center_view_width" format="dimension"/>
+        <!--中间扩展布局左右padding-->
+        <attr name="bottom_tab_center_view_padding_lr" format="dimension"/>
     </declare-styleable>
 
 </resources>
