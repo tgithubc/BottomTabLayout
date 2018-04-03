@@ -304,11 +304,19 @@ public class BottomTabLayout extends ViewGroup {
      * @param index 需要选中的tab对应的角标
      */
     public void setSelected(int index) {
-        BottomTabItemView view = getTabByIndex(index);
-        if (view != null) {
-            view.selected(true);
-            mCurrentIndex = index;
+        if (mViewPager != null) {
+            mViewPager.setCurrentItem(index, false);
         }
+        if (mListener != null) {
+            mListener.onTabSelected(index, mCurrentIndex);
+        }
+        for (int i = 0, size = mTabs.size(); i < size; i++) {
+            BottomTabItemView view = getTabByIndex(i);
+            if (view != null) {
+                view.selected(index == i);
+            }
+        }
+        mCurrentIndex = index;
     }
 
     /**
