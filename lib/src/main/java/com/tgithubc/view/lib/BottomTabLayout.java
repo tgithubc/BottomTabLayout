@@ -394,17 +394,23 @@ public class BottomTabLayout extends ViewGroup {
                         .setOnClickListener(new OnClickListener() {
                             @Override
                             public void onClick(View view) {
-                                // 临时记住上一次点击的
-                                int preIndex = mCurrentIndex;
-                                // 再把新位置赋给current
-                                mCurrentIndex = finalI;
-                                // 反选上次的，选中当前的
-                                mTabs.get(mCurrentIndex).selected(true);
-                                mTabs.get(preIndex).selected(false);
-                                if (mListener != null) {
-                                    mListener.onTabSelected(mCurrentIndex, preIndex);
-                                    if (mViewPager != null) {
-                                        mViewPager.setCurrentItem(mCurrentIndex, false);
+                                if (mCurrentIndex == finalI) {
+                                    if (mListener != null) {
+                                        mListener.onTabReselected(finalI);
+                                    }
+                                } else {
+                                    // 临时记住上一次点击的
+                                    int preIndex = mCurrentIndex;
+                                    // 再把新位置赋给current
+                                    mCurrentIndex = finalI;
+                                    // 反选上次的，选中当前的
+                                    mTabs.get(mCurrentIndex).selected(true);
+                                    mTabs.get(preIndex).selected(false);
+                                    if (mListener != null) {
+                                        mListener.onTabSelected(mCurrentIndex, preIndex);
+                                        if (mViewPager != null) {
+                                            mViewPager.setCurrentItem(mCurrentIndex, false);
+                                        }
                                     }
                                 }
                                 // 点击隐藏当前tab的红点
