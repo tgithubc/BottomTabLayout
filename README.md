@@ -3,6 +3,11 @@
 BottomTabLayout is a Simple,elegant bottom tab indicator layout.
 
 ## Usage
+Frist add jcenter url 
+```
+compile 'com.tgithubc:BottomTabLayout:1.0'
+```
+
 Add to your layout xml-file:
 
 ```xml
